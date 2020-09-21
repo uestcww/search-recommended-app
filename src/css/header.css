@@ -1,0 +1,24 @@
+/*右上角显示的用户信息*/
+.username{
+    position: absolute;
+    right: 100px;
+    top: 10px;
+}
+.userfont{
+    font-size: medium;
+}
+.children{
+    height: 885px;
+}
+.homepageDiv{
+    border: 1px #f3eeee solid;
+    font-size: 18px;
+    background-size:100% 100%;
+}
+/*HomePageSearch*/
+.searchKitParent{
+    padding: 5% 0;
+}
+.searchKit{
+    padding: 10% 0;
+}
