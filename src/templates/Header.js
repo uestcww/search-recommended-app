@@ -1,7 +1,7 @@
 import React from 'react';
 import { hashHistory, Link } from "react-router";
 import { Menu, Icon, Dropdown, Modal, message, Row, Col, Input } from 'antd';
-import { useXMLHttpRequest } from '../utils/HttpRequestUtil';
+import {useFetchGet, useFetchPost, useXMLHttpRequest} from '../utils/HttpRequestUtil';
 import Footer from "./Footer";
 import "../css/header.css";
 
@@ -11,9 +11,11 @@ class Header extends React.Component{
     constructor(props){
         super(props);
         this.state = {
+            currentMenu: "",
+            //用户登录状态和用户信息
             isLogin: false,
             username: "",
-            currentMenu: "",
+            email: "",
             //注册相关
             registerModalVisible: false,
             //登录相关
@@ -119,26 +121,47 @@ class Header extends React.Component{
             email: this.state.loginMail,
             password: this.state.loginPassword,
         };
-        const header = {
-            method: "POST",
-            url: "/login"
-        }
-        useXMLHttpRequest(header, jsonObj, (responseObj) => {
-            if(responseObj.code === "100"){
+
+        useFetchPost("/login", jsonObj).then(res => res.json()).then(resObj => {
+            if(resObj.code === "100"){
                 message.success("登录成功！");
                 localStorage.setItem("isLogin", true);
-                localStorage.setItem("username", responseObj.username);
+                localStorage.setItem("username", resObj.username);
                 this.setState({
                     loginModalVisible: false,
                     isLogin: true,
-                    username: responseObj.username
+                    username: resObj.username
                 })
-            }else if(responseObj.code === "102"){
+            }else if(resObj.code === "102"){
                 message.warning("该用户已经登录！");
             }else{
                 message.warning("没有该用户或未知错误");
             }
-        }).bind(this);
+        }).catch(err => {
+            console.error("登录时出错，", err.message);
+        })
+
+        // const header = {
+        //     method: "POST",
+        //     url: "/login"
+        // }
+        // useXMLHttpRequest(header, jsonObj, (responseObj) => {
+        //     if(responseObj.code === "100"){
+        //         message.success("登录成功！");
+        //         localStorage.setItem("isLogin", true);
+        //         localStorage.setItem("username", responseObj.username);
+        //         this.setState({
+        //             loginModalVisible: false,
+        //             isLogin: true,
+        //             username: responseObj.username
+        //         })
+        //     }else if(responseObj.code === "102"){
+        //         message.warning("该用户已经登录！");
+        //     }else{
+        //         message.warning("没有该用户或未知错误");
+        //     }
+        // }).bind(this);
+
         // let jsonString = JSON.stringify(jsonObj);
         // let xmlhttp;
         // xmlhttp = new XMLHttpRequest();
@@ -168,35 +191,49 @@ class Header extends React.Component{
 
     //处理登出事件
     handleLogout(){
-        const header = {
-            method: "GET",
-            url: "/logout"
-        };
-        useXMLHttpRequest(header, )
-        let xmlhttp;
-        xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function(){
-            if(xmlhttp.readyState === 4&&xmlhttp.status === 200){
-                let responseObj = JSON.parse(xmlhttp.responseText);
-                if(responseObj.code === "103"){
-                    message.success("退出成功！");
-                    localStorage.clear();
-                    this.setState({
-                        isLogin: false,
-                        username: "未登录"
-                    })
-                    hashHistory.push({
-                        pathname: "/homePage"
-                    })
-                }else{
-                    message.warning("操作失败！");
-                    message.warning(responseObj.message);
-                }
+        useFetchGet("/logout").then(res => res.json()).then(resObj => {
+            if(resObj.code === "103"){
+                message.success("退出成功！");
+                localStorage.clear();
+                this.setState({
+                    isLogin: false,
+                    username: "未登录"
+                })
+                hashHistory.push({
+                    pathname: "/homePage"
+                })
+            }else{
+                message.warning("操作失败！");
+                message.warning(resObj.message);
             }
-        }.bind(this);
-        xmlhttp.open("GET","/logout",true);
-        xmlhttp.setRequestHeader("Content-Type","application/json");
-        xmlhttp.send();
+        }).catch(err => {
+            console.error("登出时出错，", err.message);
+        })
+
+        // let xmlhttp;
+        // xmlhttp = new XMLHttpRequest();
+        // xmlhttp.onreadystatechange = function(){
+        //     if(xmlhttp.readyState === 4&&xmlhttp.status === 200){
+        //         let responseObj = JSON.parse(xmlhttp.responseText);
+        //         if(responseObj.code === "103"){
+        //             message.success("退出成功！");
+        //             localStorage.clear();
+        //             this.setState({
+        //                 isLogin: false,
+        //                 username: "未登录"
+        //             })
+        //             hashHistory.push({
+        //                 pathname: "/homePage"
+        //             })
+        //         }else{
+        //             message.warning("操作失败！");
+        //             message.warning(responseObj.message);
+        //         }
+        //     }
+        // }.bind(this);
+        // xmlhttp.open("GET","/logout",true);
+        // xmlhttp.setRequestHeader("Content-Type","application/json");
+        // xmlhttp.send();
     }
 
     //修改密码事件
@@ -204,25 +241,39 @@ class Header extends React.Component{
         const State = this.state;
         if(State.oldPassword!==""&&State.newPassword!==""&&State.newPasswordAgain!==""&&State.newPassword===State.newPasswordAgain){
             let jsonObj = {
-                username: this.state.username,
-                oldPassword: this.state.oldPassword,
-                newPassword: this.state.newPassword,
+                email: State.email,
+                password: State.newPassword
             };
-            const header = {
-                method: "POST",
-                url: "/updatePassword"
-            }
-            useXMLHttpRequest(header, jsonObj, (responseObj) => {
-                if(responseObj.errcode === "000"){
+            useFetchPost("/updatePassword", jsonObj).then(res => res.json()).then(resObj => {
+                if(resObj.code === "209"){
                     message.success("修改成功！请重新登录！");
                     localStorage.clear();
                     hashHistory.push({
-                        pathname: "/"
+                        pathname: "/homePage"
                     })
                 }else{
-                    message.warning(responseObj.errcontent);
+                    message.warning(resObj.message);
                 }
-            }).bind(this);
+            }).catch(err => {
+                console.error("修改密码失败，", err.message)
+            })
+
+            // const header = {
+            //     method: "POST",
+            //     url: "/updatePassword"
+            // }
+            // useXMLHttpRequest(header, jsonObj, (responseObj) => {
+            //     if(responseObj.errcode === "000"){
+            //         message.success("修改成功！请重新登录！");
+            //         localStorage.clear();
+            //         hashHistory.push({
+            //             pathname: "/"
+            //         })
+            //     }else{
+            //         message.warning(responseObj.errcontent);
+            //     }
+            // }).bind(this);
+
             // let jsonString = JSON.stringify(jsonObj);
             // let xmlhttp;
             // xmlhttp = new XMLHttpRequest();
