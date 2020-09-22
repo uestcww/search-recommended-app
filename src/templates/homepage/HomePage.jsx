@@ -1,7 +1,8 @@
 import React from 'react';
 import { Carousel } from 'antd';
-import "../../css/homepage.css";
+import "../../css/homepage/homepage.css";
 
+// 主页，目前主要包括一个走马灯
 class HomePage extends React.Component{
     constructor(props){
         super(props);
@@ -14,7 +15,7 @@ class HomePage extends React.Component{
     render(){
         return(
             <div>
-                <Carousel>
+                <Carousel autoplay>
                     <div>
                         <img src={require("../../img/GroupPhoto.jpg")} style={{display: "inline-block", verticalAlign: "top", height: "600px"}}/>
                         <div style={{display: "inline-block",verticalAlign: "top", marginLeft: "5px", width: "47%"}}>

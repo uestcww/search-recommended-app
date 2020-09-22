@@ -15,7 +15,7 @@ module.exports = {
         port: '8088',
     },
     entry: {
-        index: path.resolve(SRC_PATH, 'index.js')
+        index: path.resolve(SRC_PATH, 'index.jsx')
     },
     output: {
         path: BUILD_PATH,

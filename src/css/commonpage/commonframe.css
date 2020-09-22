@@ -1,0 +1,22 @@
+/*
+通用框架中使用的样式
+*/
+/*最大的那个Div块*/
+.commonFrameDiv{
+    position: relative;
+}
+.frameHeader{
+    background-color: #121d5a;
+    height: 100px;
+}
+
+/*.frameFooter{*/
+/*    width: 100%;*/
+/*    !*定位于父div最下方*!*/
+/*    position: absolute;*/
+/*    bottom: 0;*/
+
+/*    height: 200px;*/
+/*    border: 1px red solid;*/
+
+/*}*/

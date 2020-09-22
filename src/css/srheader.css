@@ -1,10 +1,13 @@
+/*
+页面头的css样式文件，页面头包括页面上方菜单栏，搜索栏和右上角的用户信息这些
+*/
 /*右上角显示的用户信息*/
 .username{
     position: absolute;
     right: 100px;
     top: 10px;
 }
-.userfont{
+.userFont{
     font-size: medium;
 }
 .children{
@@ -21,4 +24,15 @@
 }
 .searchKit{
     padding: 10% 0;
+}
+/*登录表单*/
+.login-form {
+    max-width: 335px;
+    margin: 0 auto;
+}
+.login-form-forgot {
+    float: right;
+}
+.login-form-button {
+    width: 100%;
 }

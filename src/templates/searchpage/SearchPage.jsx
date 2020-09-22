@@ -1,6 +1,6 @@
 import React from 'react';
 import { Table, Button } from 'antd';
-import "../../css/searchpage.css"
+import "../../css/searchpage/searchpage.css"
 
 const columns = [
     {

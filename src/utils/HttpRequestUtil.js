@@ -1,6 +1,9 @@
+/*
+* http请求响应的相关工具函数，目前包括使用原版XMLHttpRequest做交互的和使用Fetch API两种
+* 没有考虑引入jQuery使用ajax函数是因为，只为了使用一个函数就引入jQuery不太妥当，毕竟jQuery体量还是不小的
+* */
 require("es6-promise").polyfill();
 require("isomorphic-fetch");
-
 export function useXMLHttpRequest(headerObj, jsonObj, func){
     let jsonString = JSON.stringify(jsonObj);
     let xmlhttp;

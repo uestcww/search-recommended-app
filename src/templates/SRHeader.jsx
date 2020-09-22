@@ -1,13 +1,22 @@
 import React from 'react';
 import { hashHistory, Link } from "react-router";
-import { Menu, Icon, Dropdown, Modal, message, Row, Col, Input } from 'antd';
-import {useFetchGet, useFetchPost, useXMLHttpRequest} from '../utils/HttpRequestUtil';
-import Footer from "./Footer";
-import "../css/header.css";
+import { Menu, Icon, Dropdown, Modal, message, Row, Col, Input, Form, Button, Checkbox, Alert } from 'antd';
+import {useFetchGet, useFetchPost} from '../utils/HttpRequestUtil';
+import SRFooter from "./SRFooter";
+import "../css/srheader.css";
 
 const { Search } = Input;
 
-class Header extends React.Component{
+const loginModalAlertStyle = {
+    height: "30px",
+    lineHeight: "12px",
+    fontSize: "7px",
+    width: "71%",
+    display: "inline-block",
+    left: "69px"
+}
+
+class SRHeader extends React.Component{
     constructor(props){
         super(props);
         this.state = {
@@ -16,14 +25,11 @@ class Header extends React.Component{
             isLogin: false,
             username: "",
             email: "",
-            //注册相关
-            registerModalVisible: false,
             //登录相关
             loginModalVisible: false,
             loginMail: "",
             loginPassword: "",
-            loginEmailAlert: <br/>,
-            loginPasswordAlert: <br/>,
+            loginModalAlert: "",
             //修改密码相关
             passwordModifyModalVisible: false,
             oldPassword: "",
@@ -40,7 +46,7 @@ class Header extends React.Component{
 
     componentWillMount(){
         let isLogin = localStorage.getItem("isLogin");
-        if(isLogin){
+        if(!isLogin){
             this.setState({
                 isLogin: true,
                 username: localStorage.getItem("username"),
@@ -74,46 +80,23 @@ class Header extends React.Component{
         }
     }
 
-    //处理注册事件
-    handleRegister(){
-
-    }
-
     //处理登录事件
     handleLogin(){
-        let flag = false;
-        if(this.state.loginMail === ""){
-            flag = true;
+        const State = this.state
+        if(State.loginMail === "" || State.loginPassword === ""){
             this.setState({
-                loginEmailAlert: <Row>
-                    <Col span={5}></Col>
-                    <Col span={19}><span style={{color: "red",fontSize: 10}}>邮箱不能为空</span></Col>
-                </Row>
+                loginModalAlert: <Alert message="邮箱和密码均不能为空" type="warning" style={loginModalAlertStyle} />
             })
-        }
-        if(this.state.loginPassword === ""){
-            flag = true;
-            this.setState({
-                loginPasswordAlert: <Row>
-                    <Col span={5}></Col>
-                    <Col span={19}><span style={{color: "red",fontSize: 10}}>密码不能为空</span></Col>
-                </Row>
-            })
-        }
-        if(flag){
             return;
         }
         let reg = /^([a-zA-Z]|[0-9])(\w|\-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/;
-        if(reg.test(this.state.loginMail)){
+        if(reg.test(State.loginMail)){
             this.setState({
-                loginEmailAlert: <br/>
+                loginModalAlert: ""
             })
         }else{
             this.setState({
-                loginEmailAlert: <Row>
-                    <Col span={5}></Col>
-                    <Col span={19}><span style={{color: "red",fontSize: 10}}>邮箱格式不正确</span></Col>
-                </Row>
+                loginModalAlert: <Alert message="邮箱格式不正确" type="warning" style={loginModalAlertStyle} />
             })
             return;
         }
@@ -121,7 +104,6 @@ class Header extends React.Component{
             email: this.state.loginMail,
             password: this.state.loginPassword,
         };
-
         useFetchPost("/login", jsonObj).then(res => res.json()).then(resObj => {
             if(resObj.code === "100"){
                 message.success("登录成功！");
@@ -192,7 +174,7 @@ class Header extends React.Component{
     //处理登出事件
     handleLogout(){
         useFetchGet("/logout").then(res => res.json()).then(resObj => {
-            if(resObj.code === "103"){
+            if(resObj.code === "100"){
                 message.success("退出成功！");
                 localStorage.clear();
                 this.setState({
@@ -239,62 +221,119 @@ class Header extends React.Component{
     //修改密码事件
     handlePasswordModify(){
         const State = this.state;
-        if(State.oldPassword!==""&&State.newPassword!==""&&State.newPasswordAgain!==""&&State.newPassword===State.newPasswordAgain){
-            let jsonObj = {
-                email: State.email,
-                password: State.newPassword
-            };
-            useFetchPost("/updatePassword", jsonObj).then(res => res.json()).then(resObj => {
-                if(resObj.code === "209"){
-                    message.success("修改成功！请重新登录！");
-                    localStorage.clear();
-                    hashHistory.push({
-                        pathname: "/homePage"
-                    })
-                }else{
-                    message.warning(resObj.message);
-                }
-            }).catch(err => {
-                console.error("修改密码失败，", err.message)
+        let flag = false;
+        if(State.oldPassword === ""){
+            flag = true;
+            this.setState({
+                oldPasswordAlert: <Row>
+                    <Col span={5}></Col>
+                    <Col span={19}><span style={{color: "red",fontSize: 10}}>请填写旧密码</span></Col>
+                </Row>
             })
-
-            // const header = {
-            //     method: "POST",
-            //     url: "/updatePassword"
-            // }
-            // useXMLHttpRequest(header, jsonObj, (responseObj) => {
-            //     if(responseObj.errcode === "000"){
-            //         message.success("修改成功！请重新登录！");
-            //         localStorage.clear();
-            //         hashHistory.push({
-            //             pathname: "/"
-            //         })
-            //     }else{
-            //         message.warning(responseObj.errcontent);
-            //     }
-            // }).bind(this);
-
-            // let jsonString = JSON.stringify(jsonObj);
-            // let xmlhttp;
-            // xmlhttp = new XMLHttpRequest();
-            // xmlhttp.onreadystatechange = function () {
-            //     if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
-            //         let responseObj = JSON.parse(xmlhttp.responseText);
-            //         if(responseObj.errcode === "000"){
-            //             message.success("修改成功！请重新登录！");
-            //             localStorage.clear();
-            //             hashHistory.push({
-            //                 pathname: "/"
-            //             })
-            //         }else{
-            //             message.warning(responseObj.errcontent);
-            //         }
-            //     }
-            // }.bind(this);
-            // xmlhttp.open("POST","/user/changepassword",true);
-            // xmlhttp.setRequestHeader("Content-Type","application/json");
-            // xmlhttp.send(jsonString);
+        }else{
+            this.setState({
+                oldPasswordAlert: <br/>
+            })
         }
+        if(State.newPassword === ""){
+            flag = true;
+            this.setState({
+                newPasswordAlert: <Row>
+                    <Col span={5}></Col>
+                    <Col span={19}><span style={{color: "red",fontSize: 10}}>请填写新密码</span></Col>
+                </Row>
+            })
+        }else if(State.newPassword !== this.state.newPasswordAgain){
+            flag = true;
+            this.setState({
+                newPasswordAlert: <Row>
+                    <Col span={5}></Col>
+                    <Col span={19}><span style={{color: "red",fontSize: 10}}>新旧密码不一致</span></Col>
+                </Row>
+            })
+        }else{
+            this.setState({
+                newPasswordAlert: <br/>
+            })
+        }
+        if(State.newPasswordAgain === ""){
+            flag = true;
+            this.setState({
+                newPasswordAgainAlert: <Row>
+                    <Col span={5}></Col>
+                    <Col span={19}><span style={{color: "red",fontSize: 10}}>请重新填写新密码</span></Col>
+                </Row>
+            })
+        }else if(State.newPassword !== State.newPasswordAgain){
+            flag = true;
+            this.setState({
+                newPasswordAgainAlert: <Row>
+                    <Col span={5}></Col>
+                    <Col span={19}><span style={{color: "red",fontSize: 10}}>新旧密码不一致</span></Col>
+                </Row>
+            })
+        }else{
+            this.setState({
+                newPasswordAgainAlert: <br/>
+            })
+        }
+        if(flag){
+            return;
+        }
+        let jsonObj = {
+            email: State.email,
+            password: State.newPassword
+        };
+        useFetchPost("/updatePassword", jsonObj).then(res => res.json()).then(resObj => {
+            if(resObj.code === "100"){
+                message.success("修改成功！请重新登录！");
+                localStorage.clear();
+                hashHistory.push({
+                    pathname: "/homePage"
+                })
+            }else{
+                message.warning(resObj.message);
+            }
+        }).catch(err => {
+            console.error("修改密码失败，", err.message)
+        })
+
+        // const header = {
+        //     method: "POST",
+        //     url: "/updatePassword"
+        // }
+        // useXMLHttpRequest(header, jsonObj, (responseObj) => {
+        //     if(responseObj.errcode === "000"){
+        //         message.success("修改成功！请重新登录！");
+        //         localStorage.clear();
+        //         hashHistory.push({
+        //             pathname: "/"
+        //         })
+        //     }else{
+        //         message.warning(responseObj.errcontent);
+        //     }
+        // }).bind(this);
+
+        // let jsonString = JSON.stringify(jsonObj);
+        // let xmlhttp;
+        // xmlhttp = new XMLHttpRequest();
+        // xmlhttp.onreadystatechange = function () {
+        //     if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
+        //         let responseObj = JSON.parse(xmlhttp.responseText);
+        //         if(responseObj.errcode === "000"){
+        //             message.success("修改成功！请重新登录！");
+        //             localStorage.clear();
+        //             hashHistory.push({
+        //                 pathname: "/"
+        //             })
+        //         }else{
+        //             message.warning(responseObj.errcontent);
+        //         }
+        //     }
+        // }.bind(this);
+        // xmlhttp.open("POST","/user/changepassword",true);
+        // xmlhttp.setRequestHeader("Content-Type","application/json");
+        // xmlhttp.send(jsonString);
     }
 
     //搜索
@@ -308,17 +347,13 @@ class Header extends React.Component{
         })
     }
 
-    //三个模态框的显示函数，value为true时显示，false则隐藏
-    setRegisterModalVisible(value){
-        this.setState({
-            registerModalVisible: value
-        });
-    }
+    //两个模态框的显示函数，value为true时显示，false则隐藏
     setLoginModalVisible(value){
         this.setState({
             loginModalVisible: value,
-            loginUsername: "",
-            loginPassword: ""
+            loginMail: "",
+            loginPassword: "",
+            loginModalAlert: ""
         });
     }
     setPasswordModifyModalVisible(value){
@@ -344,34 +379,23 @@ class Header extends React.Component{
             loginPassword: e.target.value,
         })
     }
-    handleLoginEmailBlur(e){
-        let email = e.target.value;
+    handleLoginBlur(e){
+        let value = e.target.value;
         let reg = /^([a-zA-Z]|[0-9])(\w|\-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/;
-        if(reg.test(email)){
+        if(value === ""){
             this.setState({
-                loginEmailAlert: <br/>
+                loginModalAlert: <Alert message="邮箱和密码均不能为空" type="warning" style={loginModalAlertStyle} />
             })
+        }else if(e.target.type === "text"){
+            if(reg.test(value)){
+                this.setState({ loginModalAlert: "" })
+            }else{
+                this.setState({
+                    loginModalAlert: <Alert message="邮箱格式不正确" type="warning" style={loginModalAlertStyle} />
+                })
+            }
         }else{
-            this.setState({
-                loginEmailAlert: <Row>
-                    <Col span={5}></Col>
-                    <Col span={19}><span style={{color: "red",fontSize: 10}}>邮箱格式不正确</span></Col>
-                </Row>
-            })
-        }
-    }
-    handleLoginPasswordBlur(e){
-        if(e.target.value === ""){
-            this.setState({
-                loginPasswordAlert: <Row>
-                    <Col span={5}></Col>
-                    <Col span={19}><span style={{color: "red",fontSize: 10}}>密码不能为空</span></Col>
-                </Row>
-            })
-        }else{
-            this.setState({
-                loginPasswordAlert: <br/>
-            })
+            this.setState({ loginModalAlert: "" })
         }
     }
 
@@ -456,8 +480,8 @@ class Header extends React.Component{
     }
 
     render(){
-        const pointer = this;
-        let userMenu;
+        const pointer = this;  //固定this指针，方便后面可以在回调函数里面使用this.state中的内容，不固定的话this指针会改变
+        let userDisplay;
         const clientHeight = document.body.clientHeight;
         const MenuStyle = {
             backgroundColor: "rgb(250,244,244)",
@@ -469,35 +493,44 @@ class Header extends React.Component{
             top: "9px",
             left: "690px"
         }
+        const footerHeight = "100px";
+        const homeFooterStyle = {
+            width: "100%",
+            height: footerHeight,
+        }
+        //根据用户的登录情况改变右上角的显示，未登录和已登录的下拉菜单是不一样的
         if(this.state.isLogin){
-            userMenu = (
+            let userMenu = (
                 <Menu onClick={this.handleUserMenu.bind(this)}>
                     <Menu.Item key="modifyPassword"><Icon type="edit" />&nbsp;修改登录密码</Menu.Item>
                     <Menu.Item key="logout"><Icon type="logout" />&nbsp;登出</Menu.Item>
                 </Menu>
-            );
+            )
+            userDisplay = (
+                <Dropdown overlay={userMenu}>
+                    <Link to="" className="ant-dropdown-link" onlyActiveOnIndex><Icon type="user" />&nbsp;<span className="userFont">{this.state.username}</span>&nbsp;<Icon type="down" /></Link>
+                </Dropdown>
+            )
         }else{
-            userMenu = (
-                <Menu onClick={this.handleUserMenu.bind(this)}>
-                    <Menu.Item key="login"><Icon type="login" />&nbsp;登录</Menu.Item>
-                    <Menu.Item key="register"><Icon type="form" />&nbsp;注册</Menu.Item>
-                </Menu>
-            );
+            userDisplay = (
+                <span className="userFont">
+                    <Link to="" className="ant-dropdown-link" onClick={() => this.setLoginModalVisible(true)} onlyActiveOnIndex>登录</Link>
+                    <Link to="" className="ant-dropdown-link" onlyActiveOnIndex> | </Link>
+                    <Link to="" className="ant-dropdown-link" onlyActiveOnIndex>注册</Link>
+                </span>
+            )
         }
+        //绑定点击回车事件，以便于在登录、修改密码等事件的时候只需要敲击回车就可以，不需要必须点击按钮
         document.onkeydown = function (e){
             console.log("start")
             event = window.event||e;
             let key=event.keyCode;
             console.log("middle")
-            if(key === 13&& pointer.state.registerModalVisible === true){
-                pointer.handleRegister();
-                console.log("registerModalVisible")
-            }
-            if(key === 13&& pointer.state.loginModalVisible === true){
+            if(key === 13 && pointer.state.loginModalVisible === true){
                 pointer.handleLogin();
                 console.log("loginModalVisible")
             }
-            if(key === 13&& pointer.state.passwordModifyModalVisible === true){
+            if(key === 13 && pointer.state.passwordModifyModalVisible === true){
                 pointer.handlePasswordModify();
                 console.log("passwordModifyModalVisible")
             }
@@ -506,137 +539,46 @@ class Header extends React.Component{
         return(
             <div className="homepageDiv" style={{height: clientHeight}}>
                 <Modal
-                    title="注册"
-                    style={{ top: 50 }}
-                    visible={this.state.registerModalVisible}
-                    onOk={this.handleRegister()}
-                    onCancel={() => this.setRegisterModalVisible(false)}
-                    okText="注册"
-                    cancelText="取消"
-                >
-                    <Row>
-                        <Col span={5}>邮箱：</Col>
-                        <Col span={19}>
-                            <Input
-                                value={this.state.loginUsername}
-                                placeholder="请输入邮箱账号"
-                            />
-                        </Col>
-                    </Row>
-                    <br/>
-                    <Row>
-                        <Col span={5}>2333：</Col>
-                        <Col span={19}>
-                            <Input
-                                value={this.state.loginUsername}
-                                placeholder="请输入用户名"
-                            />
-                        </Col>
-                    </Row>
-                    <br/>
-                    <Row>
-                        <Col span={5}>2333：</Col>
-                        <Col span={19}>
-                            <Input
-                                value={this.state.loginUsername}
-                                placeholder="请输入您的用户名"
-                            />
-                        </Col>
-                    </Row>
-                    <br/>
-                    <Row>
-                        <Col span={5}>2333：</Col>
-                        <Col span={19}>
-                            <Input
-                                value={this.state.loginUsername}
-                                placeholder="请输入您的用户名"
-                            />
-                        </Col>
-                    </Row>
-                    <br/>
-                    <Row>
-                        <Col span={5}>2333：</Col>
-                        <Col span={19}>
-                            <Input
-                                value={this.state.loginUsername}
-                                placeholder="请输入您的用户名"
-                            />
-                        </Col>
-                    </Row>
-                    <br/>
-                    <Row>
-                        <Col span={5}>2333：</Col>
-                        <Col span={19}>
-                            <Input
-                                value={this.state.loginUsername}
-                                placeholder="请输入您的用户名"
-                            />
-                        </Col>
-                    </Row>
-                    <br/>
-                    <Row>
-                        <Col span={5}>2333：</Col>
-                        <Col span={19}>
-                            <Input
-                                value={this.state.loginUsername}
-                                placeholder="请输入您的用户名"
-                            />
-                        </Col>
-                    </Row>
-                    <br/>
-                    <Row>
-                        <Col span={5}>2333：</Col>
-                        <Col span={19}>
-                            <Input
-                                value={this.state.loginUsername}
-                                placeholder="请输入您的用户名"
-                            />
-                        </Col>
-                    </Row>
-                    <br/>
-                    <Row>
-                        <Col span={5}>2333：</Col>
-                        <Col span={19}>
-                            <Input
-                                value={this.state.loginUsername}
-                                placeholder="请输入您的用户名"
-                            />
-                        </Col>
-                    </Row>
-                    <br/>
-                </Modal>
-                <Modal
                     title="登录"
                     style={{ top: 50 }}
                     visible={this.state.loginModalVisible}
-                    onOk={this.handleLogin.bind(this)}
                     onCancel={() => this.setLoginModalVisible(false)}
                     okText="登录"
                     cancelText="取消"
+                    footer={null}
                 >
-                    <Row>
-                        <Col span={5}>邮箱：</Col>
-                        <Col span={19}>
-                            <Input
-                                value={this.state.loginMail}
-                                onChange={this.handleLoginEmailChange.bind(this)}
-                                onBlur={this.handleLoginEmailBlur.bind(this)}
-                                placeholder="请输入邮箱"
+                    {this.state.loginModalAlert}
+                    <Form onSubmit={this.handleLogin.bind(this)} className="login-form">
+                        <Form.Item>
+                            <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />}
+                                   value={this.state.loginMail}
+                                   onChange={this.handleLoginEmailChange.bind(this)}
+                                   onBlur={this.handleLoginBlur.bind(this)}
+                                   placeholder="请输入邮箱"
                             />
-                        </Col>
-                    </Row>
-                    {this.state.loginEmailAlert}
-                    <Row>
-                        <Col span={5}>密码：</Col>
-                        <Col span={19}>
-                            <Input.Password value={this.state.loginPassword}
-                                            onChange={this.handleLoginPasswordChange.bind(this)}
-                                            onBlur={this.handleLoginPasswordBlur.bind(this)}
-                                            placeholder="请输入密码"
+                        </Form.Item>
+                        <Form.Item>
+                            <Input.Password prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
+                                   value={this.state.loginPassword}
+                                   onChange={this.handleLoginPasswordChange.bind(this)}
+                                   onBlur={this.handleLoginBlur.bind(this)}
+                                   placeholder="请输入密码"
                             />
-                        </Col>
-                    </Row>
-                    {this.state.loginPasswordAlert}
+                        </Form.Item>
+                        <Form.Item>
+                            <Checkbox>记住密码</Checkbox>
+                            <Link className="login-form-forgot"
+                                  onlyActiveOnIndex
+                                  to={
+                                      {
+                                          pathname: "/commonFrame/emailVerify",
+                                      }
+                                  }
+                             >忘记密码？</Link>
+                            <Button type="primary" htmlType="submit" className="login-form-button">登录</Button>
+                            或者 <a href="">立即注册!</a>
+                        </Form.Item>
+                    </Form>
                 </Modal>
                 <Modal
                     title="修改密码"
@@ -712,19 +654,17 @@ class Header extends React.Component{
                         style={SearchStyle}
                     />
                     <div className="username">
-                        <Dropdown overlay={userMenu}>
-                            <Link to="" className="ant-dropdown-link"><Icon type="user" />&nbsp;<span className="userfont">{this.state.username}</span>&nbsp;<Icon type="down" /></Link>
-                        </Dropdown>
+                        {userDisplay}
                     </div>
                 </div>
                 <div key={this.props.location.pathname} >
                     {this.props.children}
                 </div>
-                <div>
-                    <Footer/>
+                <div style={homeFooterStyle}>
+                    <SRFooter footerHeight={footerHeight}/>
                 </div>
             </div>
         )
     }
 }
-export default Header;
+export default SRHeader;
