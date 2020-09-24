@@ -1,10 +1,28 @@
 import React from 'react';
-import { Layout } from 'antd';
+import { hashHistory, Link } from "react-router";
+import { Layout, Icon, Button } from 'antd';
 import SRFooter from "../SRFooter";
 
 import "../../css/commonpage/commonframe.css";
 
-const { Header, Footer, Sider, Content } = Layout;
+const { Header } = Layout;
+
+const clientHeight = document.body.clientHeight;
+const footerHeight = "160px";
+const frameFooterStyle = {
+    width: "100%",
+    // 定位于父div最下方
+    position: "absolute",
+    bottom: 0,
+    height: footerHeight,
+}
+const headerStyle = {
+    backgroundColor: "#121d5a",
+    height: "100px",
+}
+const headerHeightNum = headerStyle.height.substring(0, headerStyle.height.length-2);
+const footerHeightNum = footerHeight.substring(0, footerHeight.length-2)
+const childrenHeight = (clientHeight - headerHeightNum - footerHeightNum) + "px"
 
 /*
 * 框架类，为一些通用组件提供一个框架，组件就只需要完成自己的内容就好
@@ -14,30 +32,27 @@ class CommonFrame extends React.Component{
 
     constructor(props) {
         super(props);
-        this.state = {
-
-        }
     }
 
     render() {
-        const clientHeight = document.body.clientHeight;
-        const footerHeight = "160px";
-        const frameFooterStyle = {
-            width: "100%",
-            // 定位于父div最下方
-            position: "absolute",
-            bottom: 0,
-            height: footerHeight,
-        }
         return(
             <div className="commonFrameDiv" style={{height: clientHeight}}>
                 <Layout>
-                    <Header className="frameHeader"/>
-                    <div key={this.props.location.pathname} style={{border: "1px red solid"}}>
-                        {this.props.children}
+                    <Header style={headerStyle}>
+                        {/*<Button type="primary">*/}
+                        {/*    <Icon type="left" />*/}
+                        {/*    Backward*/}
+                        {/*</Button>*/}
+                    </Header>
+                    <div key={this.props.location.pathname}>
+                        {
+                            React.cloneElement(this.props.children, {
+                                contentHeight: childrenHeight
+                            })
+                        }
                     </div>
                     <div style={frameFooterStyle}>
-                        <SRFooter footerHeight={footerHeight}/>
+                        <SRFooter footerHeight={footerHeight} />
                     </div>
                 </Layout>
             </div>

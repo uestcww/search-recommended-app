@@ -2,11 +2,19 @@ const path = require('path');
 const webpack = require('webpack');
 const HtmlwebpackPlugin = require('html-webpack-plugin');
 const merge = require('webpack-merge')
-const baseConfig = require('./webpack.base.config.js');
+const webpackBaseConfig = require('./webpack.base.config.js');
 const ROOT_PATH = path.resolve(__dirname);
 const SRC_PATH = path.resolve(ROOT_PATH, 'src');
 
-const testConfig = merge(baseConfig, {
+const webpackTestConfig = merge(webpackBaseConfig, {
+    devServer: {
+        hot: true,
+        watchOptions: {
+            aggregateTimeout: 300,
+            poll: 1000
+        },
+        port: '8088',
+    },
     plugins: [
         new webpack.DefinePlugin({
             'process.env.API_ENV': '"test"'
@@ -15,7 +23,7 @@ const testConfig = merge(baseConfig, {
             sourceMap: true,
         }),
         new HtmlwebpackPlugin({
-            title: '图书馆书目借阅系统',
+            title: '嵌入式实时计算',
             filename: 'index.html',
             template: path.resolve(SRC_PATH, 'templates', 'index.html'),
             minify: {
@@ -26,7 +34,7 @@ const testConfig = merge(baseConfig, {
                 removeStyleLinkTypeAttributes: true,
                 removeAttributeQuotes: true
             }
-        })
+        }),
     ]
 });
-module.exports = testConfig;
+module.exports = webpackTestConfig;

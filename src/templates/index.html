@@ -5,8 +5,28 @@
     <meta charset="UTF-8">
     <link rel="shortcut icon" href="./src/img/lab-icon.png" type="image/x-icon">
     <title><%= htmlWebpackPlugin.options.title %></title>
+    <style>
+        body{
+            font-size: 10px;
+        }
+    </style>
 </head>
 <body>
 <div id="root"></div>
+<script>
+    (function (doc, win) {
+        var docElement = doc.documentElement,
+            resizeEvt = 'orientationchange' in window ? 'orientationchange' : 'resize',
+            recalc = function () {
+                var clientWidth = docElement.clientWidth;
+                if (!clientWidth) return;
+                docElement.style.fontSize = 20 * (clientWidth / 320) + 'px';
+            };
+
+        if (!doc.addEventListener) return;
+        win.addEventListener(resizeEvt, recalc, false);
+        doc.addEventListener('DOMContentLoaded', recalc, false);
+    })(document, window);
+</script>
 </body>
 </html>

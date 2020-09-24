@@ -1,35 +1,49 @@
 import React from 'react';
 import { hashHistory, Link } from "react-router";
-import { Menu, Icon, Dropdown, Modal, message, Row, Col, Input, Form, Button, Checkbox, Alert } from 'antd';
+import { Menu, Icon, Dropdown, Modal, message, Row, Col, Input, Form, Button, Checkbox } from 'antd';
 import {useFetchGet, useFetchPost} from '../utils/HttpRequestUtil';
 import SRFooter from "./SRFooter";
 import "../css/srheader.css";
 
 const { Search } = Input;
 
-const loginModalAlertStyle = {
-    height: "30px",
-    lineHeight: "12px",
-    fontSize: "7px",
-    width: "71%",
-    display: "inline-block",
-    left: "69px"
+const footerHeight = "1rem";
+const MenuStyle = {
+    backgroundColor: "rgb(250,244,244)",
+};
+const SearchStyle = {
+    display: "block",
+    width: "30%",
+    position: "absolute",
+    top: "0.06rem",
+    left: "5.7rem"
+}
+const homeFooterStyle = {
+    width: "100%",
+    height: footerHeight,
 }
 
 class SRHeader extends React.Component{
     constructor(props){
         super(props);
         this.state = {
+            //当前菜单
             currentMenu: "",
             //用户登录状态和用户信息
             isLogin: false,
             username: "",
-            email: "",
             //登录相关
             loginModalVisible: false,
-            loginMail: "",
+            loginEmail: "",
             loginPassword: "",
-            loginModalAlert: "",
+            //登录中邮箱输入框提示信息
+            loginEmailValidateStatus: "",
+            loginEmailHelp: "",
+            loginEmailHasFeedback: false,
+            //登录中密码输入框提示信息
+            loginPasswordValidateStatus: "",
+            loginPasswordHelp: "",
+            loginPasswordHasFeedback: false,
             //修改密码相关
             passwordModifyModalVisible: false,
             oldPassword: "",
@@ -46,7 +60,7 @@ class SRHeader extends React.Component{
 
     componentWillMount(){
         let isLogin = localStorage.getItem("isLogin");
-        if(!isLogin){
+        if(isLogin){
             this.setState({
                 isLogin: true,
                 username: localStorage.getItem("username"),
@@ -72,8 +86,6 @@ class SRHeader extends React.Component{
     //处理右上角用户下拉菜单
     handleUserMenu(e){
         switch (e.key){
-            case "login": this.setLoginModalVisible(true);break;
-            case "register": this.setRegisterModalVisible(true);break;
             case "modifyPassword": this.setPasswordModifyModalVisible(true);break;
             case "logout": this.handleLogout();break;
             default: break;
@@ -83,25 +95,49 @@ class SRHeader extends React.Component{
     //处理登录事件
     handleLogin(){
         const State = this.state
-        if(State.loginMail === "" || State.loginPassword === ""){
+        let flag = false;
+        if(State.loginEmail === ""){
+            flag = true;
             this.setState({
-                loginModalAlert: <Alert message="邮箱和密码均不能为空" type="warning" style={loginModalAlertStyle} />
+                loginEmailValidateStatus: "error",
+                loginEmailHelp: "邮箱不能为空",
+                loginEmailHasFeedback: true,
             })
+        }
+        if(State.loginPassword === ""){
+            flag = true;
+            this.setState({
+                loginPasswordValidateStatus: "error",
+                loginPasswordHelp: "密码不能为空",
+                loginPasswordHasFeedback: true,
+            })
+        }
+        if(flag){
             return;
         }
         let reg = /^([a-zA-Z]|[0-9])(\w|\-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/;
-        if(reg.test(State.loginMail)){
+        if(reg.test(State.loginEmail)){
             this.setState({
-                loginModalAlert: ""
+                loginEmailValidateStatus: "",
+                loginEmailHelp: "",
+                loginEmailHasFeedback: false,
+                loginPasswordValidateStatus: "",
+                loginPasswordHelp: "",
+                loginPasswordHasFeedback: false,
             })
         }else{
             this.setState({
-                loginModalAlert: <Alert message="邮箱格式不正确" type="warning" style={loginModalAlertStyle} />
+                loginEmailValidateStatus: "error",
+                loginEmailHelp: "邮箱格式不正确",
+                loginEmailHasFeedback: true,
+                loginPasswordValidateStatus: "",
+                loginPasswordHelp: "",
+                loginPasswordHasFeedback: false,
             })
             return;
         }
         let jsonObj = {
-            email: this.state.loginMail,
+            email: this.state.loginEmail,
             password: this.state.loginPassword,
         };
         useFetchPost("/login", jsonObj).then(res => res.json()).then(resObj => {
@@ -109,15 +145,16 @@ class SRHeader extends React.Component{
                 message.success("登录成功！");
                 localStorage.setItem("isLogin", true);
                 localStorage.setItem("username", resObj.username);
+                localStorage.setItem("email", resObj.email);
                 this.setState({
                     loginModalVisible: false,
                     isLogin: true,
                     username: resObj.username
                 })
             }else if(resObj.code === "102"){
-                message.warning("该用户已经登录！");
+                message.warning("警告：该用户已经登录！");
             }else{
-                message.warning("没有该用户或未知错误");
+                message.warning("警告：" + resObj.message);
             }
         }).catch(err => {
             console.error("登录时出错，", err.message);
@@ -174,7 +211,7 @@ class SRHeader extends React.Component{
     //处理登出事件
     handleLogout(){
         useFetchGet("/logout").then(res => res.json()).then(resObj => {
-            if(resObj.code === "100"){
+            if(resObj.code === "103"){
                 message.success("退出成功！");
                 localStorage.clear();
                 this.setState({
@@ -185,8 +222,7 @@ class SRHeader extends React.Component{
                     pathname: "/homePage"
                 })
             }else{
-                message.warning("操作失败！");
-                message.warning(resObj.message);
+                message.warning("警告：" + resObj.message);
             }
         }).catch(err => {
             console.error("登出时出错，", err.message);
@@ -281,18 +317,16 @@ class SRHeader extends React.Component{
             return;
         }
         let jsonObj = {
-            email: State.email,
+            email: localStorage.getItem("email"),
             password: State.newPassword
         };
         useFetchPost("/updatePassword", jsonObj).then(res => res.json()).then(resObj => {
-            if(resObj.code === "100"){
+            if(resObj.code === "209"){
                 message.success("修改成功！请重新登录！");
                 localStorage.clear();
-                hashHistory.push({
-                    pathname: "/homePage"
-                })
+                window.location.reload();
             }else{
-                message.warning(resObj.message);
+                message.warning("警告：" + resObj.message);
             }
         }).catch(err => {
             console.error("修改密码失败，", err.message)
@@ -351,9 +385,14 @@ class SRHeader extends React.Component{
     setLoginModalVisible(value){
         this.setState({
             loginModalVisible: value,
-            loginMail: "",
+            loginEmail: "",
             loginPassword: "",
-            loginModalAlert: ""
+            loginEmailValidateStatus: "",
+            loginEmailHelp: "",
+            loginEmailHasFeedback: false,
+            loginPasswordValidateStatus: "",
+            loginPasswordHelp: "",
+            loginPasswordHasFeedback: false,
         });
     }
     setPasswordModifyModalVisible(value){
@@ -371,31 +410,57 @@ class SRHeader extends React.Component{
     //处理登录模态框中的各种change blur事件等等
     handleLoginEmailChange(e){
         this.setState({
-            loginMail: e.target.value,
+            loginEmail: e.target.value,
+            loginEmailValidateStatus: "",
+            loginEmailHelp: "",
+            loginEmailHasFeedback: false,
         });
     }
     handleLoginPasswordChange(e){
         this.setState({
             loginPassword: e.target.value,
+            loginPasswordValidateStatus: "",
+            loginPasswordHelp: "",
+            loginPasswordHasFeedback: false,
         })
     }
-    handleLoginBlur(e){
+    handleLoginEmailBlur(e){
         let value = e.target.value;
         let reg = /^([a-zA-Z]|[0-9])(\w|\-)+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$/;
         if(value === ""){
             this.setState({
-                loginModalAlert: <Alert message="邮箱和密码均不能为空" type="warning" style={loginModalAlertStyle} />
+                loginEmailValidateStatus: "error",
+                loginEmailHelp: "邮箱不能为空",
+                loginEmailHasFeedback: true,
             })
-        }else if(e.target.type === "text"){
-            if(reg.test(value)){
-                this.setState({ loginModalAlert: "" })
-            }else{
-                this.setState({
-                    loginModalAlert: <Alert message="邮箱格式不正确" type="warning" style={loginModalAlertStyle} />
-                })
-            }
+        }else if(reg.test(value)){
+            this.setState({
+                loginEmailValidateStatus: "",
+                loginEmailHelp: "",
+                loginEmailHasFeedback: false,
+            })
         }else{
-            this.setState({ loginModalAlert: "" })
+            this.setState({
+                loginEmailValidateStatus: "error",
+                loginEmailHelp: "邮箱格式不正确",
+                loginEmailHasFeedback: true,
+            })
+        }
+    }
+    handleLoginPasswordBlur(e){
+        let value = e.target.value;
+        if(value === ""){
+            this.setState({
+                loginPasswordValidateStatus: "error",
+                loginPasswordHelp: "密码不能为空",
+                loginPasswordHasFeedback: true,
+            })
+        }else{
+            this.setState({
+                loginPasswordValidateStatus: "",
+                loginPasswordHelp: "",
+                loginPasswordHasFeedback: false,
+            })
         }
     }
 
@@ -481,87 +546,56 @@ class SRHeader extends React.Component{
 
     render(){
         const pointer = this;  //固定this指针，方便后面可以在回调函数里面使用this.state中的内容，不固定的话this指针会改变
-        let userDisplay;
         const clientHeight = document.body.clientHeight;
-        const MenuStyle = {
-            backgroundColor: "rgb(250,244,244)",
-        };
-        const SearchStyle = {
-            display: "block",
-            width: "30%",
-            position: "absolute",
-            top: "9px",
-            left: "690px"
-        }
-        const footerHeight = "100px";
-        const homeFooterStyle = {
-            width: "100%",
-            height: footerHeight,
-        }
-        //根据用户的登录情况改变右上角的显示，未登录和已登录的下拉菜单是不一样的
-        if(this.state.isLogin){
-            let userMenu = (
-                <Menu onClick={this.handleUserMenu.bind(this)}>
-                    <Menu.Item key="modifyPassword"><Icon type="edit" />&nbsp;修改登录密码</Menu.Item>
-                    <Menu.Item key="logout"><Icon type="logout" />&nbsp;登出</Menu.Item>
-                </Menu>
-            )
-            userDisplay = (
-                <Dropdown overlay={userMenu}>
-                    <Link to="" className="ant-dropdown-link" onlyActiveOnIndex><Icon type="user" />&nbsp;<span className="userFont">{this.state.username}</span>&nbsp;<Icon type="down" /></Link>
-                </Dropdown>
-            )
-        }else{
-            userDisplay = (
-                <span className="userFont">
-                    <Link to="" className="ant-dropdown-link" onClick={() => this.setLoginModalVisible(true)} onlyActiveOnIndex>登录</Link>
-                    <Link to="" className="ant-dropdown-link" onlyActiveOnIndex> | </Link>
-                    <Link to="" className="ant-dropdown-link" onlyActiveOnIndex>注册</Link>
-                </span>
-            )
-        }
+        const userMenu = (
+            <Menu onClick={this.handleUserMenu.bind(this)}>
+                <Menu.Item key="modifyPassword"><Icon type="edit" />&nbsp;修改登录密码</Menu.Item>
+                <Menu.Item key="logout"><Icon type="logout" />&nbsp;登出</Menu.Item>
+            </Menu>
+        );
         //绑定点击回车事件，以便于在登录、修改密码等事件的时候只需要敲击回车就可以，不需要必须点击按钮
         document.onkeydown = function (e){
-            console.log("start")
             event = window.event||e;
+            const loginVisible = pointer.state.loginModalVisible;
+            const passwordVisible = pointer.state.passwordModifyModalVisible;
             let key=event.keyCode;
-            console.log("middle")
-            if(key === 13 && pointer.state.loginModalVisible === true){
+            // 这里不能写三个等号的等同符，应该写两个等号的等值符，因为会出问题，具体为啥不知道
+            if(key === 13 && loginVisible == true){
                 pointer.handleLogin();
-                console.log("loginModalVisible")
             }
-            if(key === 13 && pointer.state.passwordModifyModalVisible === true){
+            if(key === 13 && passwordVisible == true){
                 pointer.handlePasswordModify();
-                console.log("passwordModifyModalVisible")
             }
-            console.log("end")
         }
         return(
-            <div className="homepageDiv" style={{height: clientHeight}}>
+            <div className="headerDiv" style={{height: clientHeight}}>
                 <Modal
                     title="登录"
-                    style={{ top: 50 }}
+                    style={{ top: "1rem" }}
                     visible={this.state.loginModalVisible}
                     onCancel={() => this.setLoginModalVisible(false)}
                     okText="登录"
                     cancelText="取消"
                     footer={null}
                 >
-                    {this.state.loginModalAlert}
                     <Form onSubmit={this.handleLogin.bind(this)} className="login-form">
-                        <Form.Item>
-                            <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }} />}
-                                   value={this.state.loginMail}
+                        <Form.Item  validateStatus={this.state.loginEmailValidateStatus}
+                                    help={this.state.loginEmailHelp}
+                                    hasFeedback={this.state.loginEmailHasFeedback}>
+                            <Input prefix={<Icon type="user" style={{ color: 'rgba(0,0,0,.25)' }}/>}
+                                   value={this.state.loginEmail}
                                    onChange={this.handleLoginEmailChange.bind(this)}
-                                   onBlur={this.handleLoginBlur.bind(this)}
+                                   onBlur={this.handleLoginEmailBlur.bind(this)}
                                    placeholder="请输入邮箱"
                             />
                         </Form.Item>
-                        <Form.Item>
-                            <Input.Password prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }} />}
+                        <Form.Item validateStatus={this.state.loginPasswordValidateStatus}
+                                   help={this.state.loginPasswordHelp}
+                                   hasFeedback={this.state.loginPasswordHasFeedback}>
+                            <Input.Password prefix={<Icon type="lock" style={{ color: 'rgba(0,0,0,.25)' }}/>}
                                    value={this.state.loginPassword}
                                    onChange={this.handleLoginPasswordChange.bind(this)}
-                                   onBlur={this.handleLoginBlur.bind(this)}
+                                   onBlur={this.handleLoginPasswordBlur.bind(this)}
                                    placeholder="请输入密码"
                             />
                         </Form.Item>
@@ -571,7 +605,7 @@ class SRHeader extends React.Component{
                                   onlyActiveOnIndex
                                   to={
                                       {
-                                          pathname: "/commonFrame/emailVerify",
+                                          pathname: "/commonFrame/forgetPassword",
                                       }
                                   }
                              >忘记密码？</Link>
@@ -582,7 +616,7 @@ class SRHeader extends React.Component{
                 </Modal>
                 <Modal
                     title="修改密码"
-                    style={{ top: 50 }}
+                    style={{ top: "1rem" }}
                     visible={this.state.passwordModifyModalVisible}
                     onOk={this.handlePasswordModify.bind(this)}
                     onCancel={() => this.setPasswordModifyModalVisible(false)}
@@ -654,7 +688,20 @@ class SRHeader extends React.Component{
                         style={SearchStyle}
                     />
                     <div className="username">
-                        {userDisplay}
+                        {//根据用户的登录情况改变右上角的显示，未登录和已登录的菜单是不一样的
+                            this.state.isLogin ?
+                                (
+                                    <Dropdown overlay={userMenu}>
+                                        <Link to="" className="ant-dropdown-link" onlyActiveOnIndex><Icon type="user" />&nbsp;<span className="userFont">{this.state.username}</span>&nbsp;<Icon type="down" /></Link>
+                                    </Dropdown>
+                                ):(
+                                    <span className="userFont">
+                                        <Link to="" className="ant-dropdown-link" onClick={() => this.setLoginModalVisible(true)} onlyActiveOnIndex>登录</Link>
+                                        <Link to="" className="ant-dropdown-link" onlyActiveOnIndex> | </Link>
+                                        <Link to="" className="ant-dropdown-link" onlyActiveOnIndex>注册</Link>
+                                    </span>
+                                )
+                        }
                     </div>
                 </div>
                 <div key={this.props.location.pathname} >

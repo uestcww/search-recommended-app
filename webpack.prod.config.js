@@ -1,12 +1,12 @@
 const path = require('path');
 const ROOT_PATH = path.resolve(__dirname);
 const SRC_PATH = path.resolve(ROOT_PATH, 'src');
-const baseConfig = require('./webpack.base.config.js');
+const webpackBaseConfig = require('./webpack.base.config.js');
 const webpack = require('webpack');
 const HtmlwebpackPlugin = require('html-webpack-plugin');
 const merge = require('webpack-merge');
 
-const prodConfig = merge(baseConfig, {
+const webpackProdConfig = merge(webpackBaseConfig, {
     plugins: [
         new webpack.DefinePlugin({
             "process.env": {
@@ -38,4 +38,4 @@ const prodConfig = merge(baseConfig, {
         })
     ]
 });
-module.exports = prodConfig;
+module.exports = webpackProdConfig;

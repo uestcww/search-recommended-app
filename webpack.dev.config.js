@@ -1,13 +1,13 @@
 const path = require('path');
 const ROOT_PATH = path.resolve(__dirname);
 const SRC_PATH = path.resolve(ROOT_PATH, 'src');
-const baseConfig = require('./webpack.base.config.js');
+const webpackBaseConfig = require('./webpack.base.config.js');
 const webpack = require('webpack');
 const HtmlwebpackPlugin = require('html-webpack-plugin');
 const OpenBrowserPlugin = require('open-browser-webpack-plugin');
 const merge = require('webpack-merge');
 
-const devConfig = merge(baseConfig, {
+const webpackDevConfig = merge(webpackBaseConfig, {
     devtool: "cheap-module-eval-source-map",
     plugins: [
         new webpack.DefinePlugin({
@@ -24,11 +24,8 @@ const devConfig = merge(baseConfig, {
             template: path.resolve(SRC_PATH, 'templates', 'index.html')
         }),
         new OpenBrowserPlugin({
-            url: "http://localhost:8088/#/homePage"
+            url: "http://localhost:8080/#/homePage"
         }),
-        // new webpack.HotModuleReplacementPlugin({
-        //
-        // })
     ]
 });
-module.exports = devConfig;
+module.exports = webpackDevConfig;

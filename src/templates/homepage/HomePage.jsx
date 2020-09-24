@@ -2,6 +2,18 @@ import React from 'react';
 import { Carousel } from 'antd';
 import "../../css/homepage/homepage.css";
 
+const imgStyle = {
+    display: "inline-block",
+    verticalAlign: "top",
+    height: "5rem"
+}
+const carouselStyle = {
+    display: "inline-block",
+    verticalAlign: "top",
+    marginLeft: "0.08rem",
+    width: "47%"
+}
+
 // 主页，目前主要包括一个走马灯
 class HomePage extends React.Component{
     constructor(props){
@@ -11,14 +23,13 @@ class HomePage extends React.Component{
             currentMenu: "homePage",
         }
     }
-
     render(){
         return(
             <div>
-                <Carousel autoplay>
+                <Carousel>
                     <div>
-                        <img src={require("../../img/GroupPhoto.jpg")} style={{display: "inline-block", verticalAlign: "top", height: "600px"}}/>
-                        <div style={{display: "inline-block",verticalAlign: "top", marginLeft: "5px", width: "47%"}}>
+                        <img src={require("../../img/GroupPhoto.jpg")} style={imgStyle} />
+                        <div style={carouselStyle}>
                             <h3>实验室主任：雷航</h3>
                             <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;雷航，博士、教授、博士生导师。1982年毕业于成都科技大学计算机学院，1985年至1988年电子科技大学攻读硕士学位研究生。
                                 1993～1997年电子科技大学攻读博士学位，1997年毕业留校任教。

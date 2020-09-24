@@ -5,14 +5,14 @@ const BUILD_PATH = path.resolve(ROOT_PATH, 'packaging/dist');
 
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 
-module.exports = {
+const webpackBaseConfig = {
     devServer: {
         hot: true,
         watchOptions: {
             aggregateTimeout: 300,
             poll: 1000
         },
-        port: '8088',
+        port: '8080',
     },
     entry: {
         index: path.resolve(SRC_PATH, 'index.jsx')
@@ -65,4 +65,5 @@ module.exports = {
     plugins: [
         new ExtractTextPlugin("style.css"),
     ]
-};
+}
+module.exports = webpackBaseConfig;

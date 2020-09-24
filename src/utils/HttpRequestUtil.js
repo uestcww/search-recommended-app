@@ -25,7 +25,6 @@ export function fetchRequest(method, url, body){
         body = undefined;
     }else{
         body = body && JSON.stringify(body)
-        console.log(body)
     }
     return fetch(url, {
         method,
